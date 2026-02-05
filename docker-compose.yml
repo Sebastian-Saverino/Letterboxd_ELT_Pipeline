@@ -1,161 +1,188 @@
-version: "3.9"
+# version: "3.9"
 
-services:
-  # -------------------------
-  # Storage (Raw Data Lake)
-  # -------------------------
-  minio:
-    image: quay.io/minio/minio:latest
-    container_name: minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # MinIO console UI
-    volumes:
-      - minio_data:/data
-    networks:
-      - appnet
 
-  # Create bucket(s) on startup
-  minio_init:
-    image: quay.io/minio/mc:latest
-    container_name: minio_init
-    depends_on:
-      - minio
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
-      mc mb -p local/$${MINIO_BUCKET_RAW} || true &&
-      mc anonymous set download local/$${MINIO_BUCKET_RAW} || true &&
-      echo 'MinIO bucket ensured.'"
-    networks:
-      - appnet
+
+
+
+# services:
+#   # -------------------------
+#   # Storage (Raw Data Lake)
+#   # -------------------------
+#   minio:
+#     image: quay.io/minio/minio:latest
+#     container_name: minio
+#     command: server /data --console-address ":9001"
+#     environment:
+#       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+#       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+#     ports:
+#       - "9000:9000"   # S3 API
+#       - "9001:9001"   # MinIO console UI
+#     volumes:
+#       - minio_data:/data
+#     networks:
+#       - appnet
+
+#   # Create bucket(s) on startup
+#   minio_init:
+#     image: quay.io/minio/mc:latest
+#     container_name: minio_init
+#     depends_on:
+#       - minio
+#     environment:
+#       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+#       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+#       MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
+#     entrypoint: >
+#       /bin/sh -c "
+#       mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+#       mc mb -p local/$${MINIO_BUCKET_RAW} || true &&
+#       mc anonymous set download local/$${MINIO_BUCKET_RAW} || true &&
+#       echo 'MinIO bucket ensured.'"
+#     networks:
+#       - appnet
 
   # -------------------------
   # Databases
   # -------------------------
-  postgres_meta:
-    image: postgres:16
-    container_name: postgres_meta
-    environment:
-      POSTGRES_USER: ${POSTGRES_META_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_META_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_META_DB}
-    ports:
-      - "5433:5432"   # host 5433 -> container 5432
-    volumes:
-      - pg_meta_data:/var/lib/postgresql/data
-      - ./sql/init/01_metadata.sql:/docker-entrypoint-initdb.d/01_metadata.sql:ro
-    networks:
-      - appnet
+  # postgres_meta:
+  #   image: postgres:16
+  #   container_name: postgres_meta
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_META_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_META_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_META_DB}
+  #   ports:
+  #     - "5433:5432"   # host 5433 -> container 5432
+  #   volumes:
+  #     - pg_meta_data:/var/lib/postgresql/data
+  #     - ./sql/init/01_metadata.sql:/docker-entrypoint-initdb.d/01_metadata.sql:ro
+  #   networks:
+  #     - appnet
 
-  postgres_warehouse:
-    image: postgres:16
-    container_name: postgres_warehouse
-    environment:
-      POSTGRES_USER: ${POSTGRES_WAREHOUSE_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_WAREHOUSE_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_WAREHOUSE_DB}
-    ports:
-      - "5434:5432"   # host 5434 -> container 5432
-    volumes:
-      - pg_warehouse_data:/var/lib/postgresql/data
-      - ./sql/init/02_warehouse.sql:/docker-entrypoint-initdb.d/02_warehouse.sql:ro
-    networks:
-      - appnet
+  # postgres_warehouse:
+  #   image: postgres:16
+  #   container_name: postgres_warehouse
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_WAREHOUSE_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_WAREHOUSE_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_WAREHOUSE_DB}
+  #   ports:
+  #     - "5434:5432"   # host 5434 -> container 5432
+  #   volumes:
+  #     - pg_warehouse_data:/var/lib/postgresql/data
+  #     - ./sql/init/02_warehouse.sql:/docker-entrypoint-initdb.d/02_warehouse.sql:ro
+  #   networks:
+  #     - appnet
 
   # -------------------------
   # API (Ingest)
   # -------------------------
+  # api:
+  #   build:
+  #     context: ./api
+  #     dockerfile: Dockerfile
+  #   container_name: api
+  #   environment:
+  #     # Metadata DB
+  #     META_DB_HOST: postgres_meta
+  #     META_DB_PORT: 5432
+  #     META_DB_NAME: ${POSTGRES_META_DB}
+  #     META_DB_USER: ${POSTGRES_META_USER}
+  #     META_DB_PASSWORD: ${POSTGRES_META_PASSWORD}
+
+  #     # MinIO
+  #     MINIO_ENDPOINT: minio:9000
+  #     MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+  #     MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+  #     MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
+  #     MINIO_SECURE: "false"
+  #   depends_on:
+  #     - postgres_meta
+  #     - minio
+  #     - minio_init
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./api:/app
+  #   command: >
+  #     uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  #   networks:
+  #     - appnet
+
+
+services:
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: api
-    environment:
-      # Metadata DB
-      META_DB_HOST: postgres_meta
-      META_DB_PORT: 5432
-      META_DB_NAME: ${POSTGRES_META_DB}
-      META_DB_USER: ${POSTGRES_META_USER}
-      META_DB_PASSWORD: ${POSTGRES_META_PASSWORD}
-
-      # MinIO
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
-      MINIO_SECURE: "false"
-    depends_on:
-      - postgres_meta
-      - minio
-      - minio_init
+    container_name: letterboxd_api
+    env_file:
+      - .env
     ports:
-      - "8000:8000"
+      - "${API_PORT}:8000"
     volumes:
       - ./api:/app
     command: >
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    networks:
-      - appnet
+      uvicorn app.main:app
+      --host ${API_HOST}
+      --port ${API_PORT}
+      --reload
+
+
+
+
 
   # -------------------------
   # Transform (dbt)
   # -------------------------
-  dbt:
-    build:
-      context: ./dbt
-      dockerfile: Dockerfile
-    container_name: dbt
-    environment:
-      DBT_HOST: postgres_warehouse
-      DBT_PORT: 5432
-      DBT_DBNAME: ${POSTGRES_WAREHOUSE_DB}
-      DBT_USER: ${POSTGRES_WAREHOUSE_USER}
-      DBT_PASSWORD: ${POSTGRES_WAREHOUSE_PASSWORD}
+#   dbt:
+#     build:
+#       context: ./dbt
+#       dockerfile: Dockerfile
+#     container_name: dbt
+#     environment:
+#       DBT_HOST: postgres_warehouse
+#       DBT_PORT: 5432
+#       DBT_DBNAME: ${POSTGRES_WAREHOUSE_DB}
+#       DBT_USER: ${POSTGRES_WAREHOUSE_USER}
+#       DBT_PASSWORD: ${POSTGRES_WAREHOUSE_PASSWORD}
 
-      # If you later pull raw from MinIO in dbt via external tables or staging jobs:
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
-    depends_on:
-      - postgres_warehouse
-      - minio
-    volumes:
-      - ./dbt:/usr/app
-    working_dir: /usr/app
-    # run manually: docker compose run --rm dbt dbt run
-    entrypoint: ["bash", "-lc"]
-    command: ["sleep infinity"]
-    networks:
-      - appnet
+#       # If you later pull raw from MinIO in dbt via external tables or staging jobs:
+#       MINIO_ENDPOINT: http://minio:9000
+#       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+#       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+#       MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
+#     depends_on:
+#       - postgres_warehouse
+#       - minio
+#     volumes:
+#       - ./dbt:/usr/app
+#     working_dir: /usr/app
+#     # run manually: docker compose run --rm dbt dbt run
+#     entrypoint: ["bash", "-lc"]
+#     command: ["sleep infinity"]
+#     networks:
+#       - appnet
 
-  # -------------------------
-  # BI (optional)
-  # -------------------------
-  metabase:
-    image: metabase/metabase:latest
-    container_name: metabase
-    depends_on:
-      - postgres_warehouse
-    ports:
-      - "3000:3000"
-    networks:
-      - appnet
+#   # -------------------------
+#   # BI (optional)
+#   # -------------------------
+#   metabase:
+#     image: metabase/metabase:latest
+#     container_name: metabase
+#     depends_on:
+#       - postgres_warehouse
+#     ports:
+#       - "3000:3000"
+#     networks:
+#       - appnet
 
-networks:
-  appnet:
-    driver: bridge
+# networks:
+#   appnet:
+#     driver: bridge
 
-volumes:
-  minio_data:
-  pg_meta_data:
-  pg_warehouse_data:
+# volumes:
+#   minio_data:
+#   pg_meta_data:
+#   pg_warehouse_data:
