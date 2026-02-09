@@ -1,121 +1,71 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
-from uuid import uuid4
+import hashlib
+import os
 from datetime import datetime, timezone
 
-import boto3
-from botocore.client import Config as BotoConfig
-from sqlalchemy import text
+from fastapi import APIRouter, File, UploadFile, HTTPException
 
-from app.core import config
-from app.db.session import SessionLocal
+from app.services.minio_client import s3_client
+from app.services.meta import meta_conn
 
-router = APIRouter(prefix="/ingestions", tags=["ingestions"])
+router = APIRouter(prefix="/ingest", tags=["ingest"])
 
+RAW_BUCKET = os.getenv("MINIO_BUCKET_RAW", "raw")
 
-def s3_client():
-    scheme = "https" if config.MINIO_SECURE else "http"
-    endpoint_url = f"{scheme}://{config.MINIO_ENDPOINT}"
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint_url,
-        aws_access_key_id=config.MINIO_ACCESS_KEY,
-        aws_secret_access_key=config.MINIO_SECRET_KEY,
-        config=BotoConfig(signature_version="s3v4"),
-        region_name="us-east-1",
-    )
+@router.post("/letterboxd/upload")
+async def upload_letterboxd_csv(file: UploadFile = File(...)):
+    # Basic validation
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only .csv files are supported")
 
-
-@router.post("/letterboxd")
-async def ingest_letterboxd(file: UploadFile = File(...)):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Missing filename")
-
-    ingestion_id = uuid4()
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    object_key = f"letterboxd/{ts}_{ingestion_id}_{file.filename}"
-
+    # Read bytes (v1: in-memory; later we’ll stream)
     data = await file.read()
     size_bytes = len(data)
-    content_type = file.content_type or "application/octet-stream"
+    if size_bytes == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    sha256 = hashlib.sha256(data).hexdigest()
+
+    # Build an object key
+    ts = datetime.now(timezone.utc).strftime("%Y/%m/%d/%H%M%S")
+    safe_name = file.filename.replace(" ", "_")
+    object_key = f"letterboxd/{ts}_{sha256[:12]}_{safe_name}"
 
     # Upload to MinIO
-    try:
-        s3 = s3_client()
-        s3.put_object(
-            Bucket=config.MINIO_BUCKET_RAW,
-            Key=object_key,
-            Body=data,
-            ContentType=content_type,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"MinIO upload failed: {e}")
+    s3 = s3_client()
+    s3.put_object(
+        Bucket=RAW_BUCKET,
+        Key=object_key,
+        Body=data,
+        ContentType=file.content_type or "text/csv",
+    )
 
-    # Insert metadata
-    db = SessionLocal()
-    try:
-        db.execute(
-            text("""
-                INSERT INTO ingestion_runs
-                (ingestion_id, source, original_filename, bucket, object_key,
-                 size_bytes, content_type, status)
-                VALUES
-                (:ingestion_id, 'letterboxd', :filename, :bucket, :object_key,
-                 :size_bytes, :content_type, 'uploaded')
-            """),
-            {
-                "ingestion_id": str(ingestion_id),
-                "filename": file.filename,
-                "bucket": config.MINIO_BUCKET_RAW,
-                "object_key": object_key,
-                "size_bytes": size_bytes,
-                "content_type": content_type,
-            },
-        )
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Metadata insert failed: {e}")
-    finally:
-        db.close()
+    # Write metadata row to Postgres meta
+    with meta_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO ingest_runs (source, bucket, object_key, original_name, content_type, size_bytes, sha256)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id;
+                """,
+                (
+                    "letterboxd_csv",
+                    RAW_BUCKET,
+                    object_key,
+                    file.filename,
+                    file.content_type,
+                    size_bytes,
+                    sha256,
+                ),
+            )
+            ingest_id = cur.fetchone()[0]
+        conn.commit()
 
     return {
-        "ingestion_id": str(ingestion_id),
-        "status": "uploaded",
-        "bucket": config.MINIO_BUCKET_RAW,
+        "status": "ok",
+        "ingest_id": ingest_id,
+        "bucket": RAW_BUCKET,
         "object_key": object_key,
         "size_bytes": size_bytes,
+        "sha256": sha256,
     }
-
-
-@router.get("")
-def list_ingestions(
-    status: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=500),
-):
-    db = SessionLocal()
-    try:
-        if status:
-            rows = db.execute(
-                text("""
-                    SELECT *
-                    FROM ingestion_runs
-                    WHERE status = :status
-                    ORDER BY created_at DESC
-                    LIMIT :limit
-                """),
-                {"status": status, "limit": limit},
-            ).mappings().all()
-        else:
-            rows = db.execute(
-                text("""
-                    SELECT *
-                    FROM ingestion_runs
-                    ORDER BY created_at DESC
-                    LIMIT :limit
-                """),
-                {"limit": limit},
-            ).mappings().all()
-
-        return {"count": len(rows), "items": rows}
-    finally:
-        db.close()

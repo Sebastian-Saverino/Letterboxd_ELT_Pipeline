@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import UploadFile, File
 
 
 def must(name: str) -> str:
@@ -116,21 +117,27 @@ def debug_env() -> Dict[str, Optional[str]]:
     }
 
 
+from app.routes.ingest import router as ingest_router
+app.include_router(ingest_router)
+
+
+
 # ---- Optional: a placeholder route for your ingestion step ----
-@app.post("/ingest/letterboxd", tags=["ingest"])
-def ingest_letterboxd(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Placeholder ingestion endpoint.
-    Next, we’ll accept:
-      - a CSV upload (multipart/form-data)
-      - or a URL to fetch
-      - then write to MinIO RAW bucket
-      - then write metadata row to Postgres Meta DB
-    """
-    if not isinstance(payload, dict):
-        raise HTTPException(status_code=400, detail="Payload must be a JSON object")
+@app.post("/ingest/letterboxd/upload", tags=["ingest"])
+async def ingest_letterboxd_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
+    # Basic validation
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only .csv files are supported")
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file")
+
     return {
         "status": "received",
-        "keys": list(payload.keys()),
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "size_bytes": len(data),
         "time_utc": now_utc_iso(),
     }
+
