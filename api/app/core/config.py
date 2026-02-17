@@ -1,35 +1,62 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import SecretStr, Field
-from sqlalchemy.engine import URL
+# import os
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # Metadata DB
-    META_DB_HOST: str = "postgres_meta"
-    META_DB_PORT: int = 5432
-    META_DB_NAME: str = "metadata"
-    META_DB_USER: str = "meta_user"
-    META_DB_PASSWORD: SecretStr = Field(default=SecretStr("password"))
+# def must(name: str) -> str:
+#     value = os.getenv(name)
+#     if value is None or value == "":
+#         raise RuntimeError(f"Missing required environment variable: {name}")
+#     return value
 
-    # MinIO (S3)
-    MINIO_ENDPOINT: str = "minio:9000"
-    MINIO_ACCESS_KEY: str = "admin"
-    MINIO_SECRET_KEY: str = "password"
-    MINIO_BUCKET_RAW: str = "raw"
-    MINIO_SECURE: bool = False
 
-    def meta_db_url(self) -> str:
-        pw = self.META_DB_PASSWORD.get_secret_value()
-        return str(
-            URL.create(
-                "postgresql+psycopg2",
-                username=self.META_DB_USER,
-                password=pw,
-                host=self.META_DB_HOST,
-                port=self.META_DB_PORT,
-                database=self.META_DB_NAME,
-            )
-        )
+# # =========================
+# # FastAPI App (.env keys: API_HOST, API_PORT, API_ENV)
+# # =========================
 
-settings = Settings()
+# API_HOST = must("API_HOST")
+# API_PORT = int(must("API_PORT"))
+# API_ENV = must("API_ENV")
+
+
+# # =========================
+# # MinIO (Object Storage) (.env keys: MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, MINIO_BUCKET_RAW)
+# # =========================
+# # NOTE: Your .env does NOT define MINIO_ENDPOINT or MINIO_SECURE, so we set sane defaults here.
+
+# MINIO_ENDPOINT = "minio:9000"  # docker-compose service name + port
+# MINIO_SECURE = False
+
+# MINIO_ACCESS_KEY = must("MINIO_ROOT_USER")
+# MINIO_SECRET_KEY = must("MINIO_ROOT_PASSWORD")
+# MINIO_BUCKET_RAW = must("MINIO_BUCKET_RAW")
+
+
+# # =========================
+# # Postgres - Metadata DB (.env keys: POSTGRES_META_USER, POSTGRES_META_PASSWORD, POSTGRES_META_DB, POSTGRES_META_PORT)
+# # =========================
+# # NOTE: Your .env does NOT define POSTGRES_META_HOST, so we default to the compose service name.
+
+# POSTGRES_META_HOST = "postgres_meta"
+# POSTGRES_META_PORT = int(must("POSTGRES_META_PORT"))
+# POSTGRES_META_DB = must("POSTGRES_META_DB")
+# POSTGRES_META_USER = must("POSTGRES_META_USER")
+# POSTGRES_META_PASSWORD = must("POSTGRES_META_PASSWORD")
+
+
+# # =========================
+# # Postgres - Warehouse DB (.env keys: POSTGRES_WAREHOUSE_USER, POSTGRES_WAREHOUSE_PASSWORD, POSTGRES_WAREHOUSE_DB, POSTGRES_WAREHOUSE_PORT)
+# # =========================
+# # NOTE: Your .env does NOT define POSTGRES_WAREHOUSE_HOST, so we default to the compose service name.
+
+# POSTGRES_WAREHOUSE_HOST = "postgres_warehouse"
+# POSTGRES_WAREHOUSE_PORT = int(must("POSTGRES_WAREHOUSE_PORT"))
+# POSTGRES_WAREHOUSE_DB = must("POSTGRES_WAREHOUSE_DB")
+# POSTGRES_WAREHOUSE_USER = must("POSTGRES_WAREHOUSE_USER")
+# POSTGRES_WAREHOUSE_PASSWORD = must("POSTGRES_WAREHOUSE_PASSWORD")
+
+
+# # =========================
+# # dbt (.env keys: DBT_TARGET, DBT_PROFILES_DIR)
+# # =========================
+
+# DBT_TARGET = must("DBT_TARGET")
+# DBT_PROFILES_DIR = must("DBT_PROFILES_DIR")
