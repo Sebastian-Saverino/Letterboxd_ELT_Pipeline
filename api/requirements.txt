@@ -4,3 +4,6 @@ boto3
 SQLAlchemy
 psycopg2-binary
 python-multipart
+duckdb
+sqlalchemy
+pandas
