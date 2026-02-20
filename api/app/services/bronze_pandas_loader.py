@@ -17,15 +17,56 @@ RENAME_MAPS = {
         "Letterboxd URI": "letterboxd_uri",
         "Rating": "rating",
     },
+
     "watched": {
         "Date": "list_date",
         "Name": "name",
         "Year": "year",
         "Letterboxd URI": "letterboxd_uri",
     },
-    # Add next:
-    # "watchlist": { ...same as watched... },
-    # "diary": { ...includes Rating/Rewatch/Tags/Watched Date... },
+
+    "watchlist": {
+        "Date": "list_date",
+        "Name": "name",
+        "Year": "year",
+        "Letterboxd URI": "letterboxd_uri",
+    },
+
+    "reviews": {
+        "Date": "list_date",
+        "Name": "name",
+        "Year": "year",
+        "Letterboxd URI": "letterboxd_uri",
+        "Rating": "rating",
+        "Rewatch": "rewatch",
+        "Review": "review",
+        "Tags": "tags",
+        "Watched Date": "watched_date",
+    },
+
+    "diary": {
+        "Date": "list_date",
+        "Name": "name",
+        "Year": "year",
+        "Letterboxd URI": "letterboxd_uri",
+        "Rating": "rating",
+        "Rewatch": "rewatch",
+        "Tags": "tags",
+        "Watched Date": "watched_date",
+    },
+
+    "profile": {
+        "Date Joined": "date_joined",
+        "Username": "username",
+        "Given Name": "given_name",
+        "Family Name": "family_name",
+        "Email Address": "email_address",
+        "Location": "location",
+        "Website": "website",
+        "Bio": "bio",
+        "Pronoun": "pronoun",
+        "Favorite Films": "favorite_films",
+    },
 }
 
 
@@ -128,3 +169,5 @@ def load_latest_to_bronze(target_table: str, prefix: str = "letterboxd/") -> str
 
 def fetch_from_warehouse(query: str) -> pd.DataFrame:
     return pd.read_sql(query, _warehouse_engine())
+
+
