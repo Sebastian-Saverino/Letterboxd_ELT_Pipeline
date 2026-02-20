@@ -87,6 +87,8 @@ services:
     container_name: letterboxd_api
     env_file:
       - .env
+    volumes:
+      - .:/api
     ports:
       - "8000:8000"
     depends_on:
@@ -114,66 +116,3 @@ volumes:
 
 
 
-# services:
-#   minio:
-#     image: quay.io/minio/minio:latest
-#     container_name: minio
-#     ports:
-#       - "9000:9000"
-#       - "9001:9001"
-#     environment:
-#       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-#       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-#     volumes:
-#       - minio_data:/data
-#     command: server /data --console-address ":9001"
-
-#   minio_init:
-#     image: quay.io/minio/mc:latest
-#     container_name: minio_init
-#     depends_on:
-#       - minio
-#     environment:
-#       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-#       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-#       MINIO_BUCKET_RAW: ${MINIO_BUCKET_RAW}
-#     entrypoint: >
-#       /bin/sh -c "
-#       mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
-#       mc mb -p local/$${MINIO_BUCKET_RAW} || true &&
-#       mc anonymous set download local/$${MINIO_BUCKET_RAW} || true &&
-#       echo 'MinIO bucket ensured.'
-#       "
-# services:
-  
-#   api:
-#     build:
-#       context: ./api
-#       dockerfile: Dockerfile.api
-#     container_name: letterboxd_api
-#     env_file:
-#       - .env
-#     ports:
-#       - "8000:8000"
-#     # depends_on:
-#     #   - minio
-
-# volumes:
-#   minio_data:
-
-
-
-
-# services:
-
-#   postgres-meta:
-#     image: postgres:16
-#     container_name: postgres-meta
-#     environment:
-#       POSTGRES_USER: ${POSTGRES_META_USER}
-#       POSTGRES_PASSWORD: ${POSTGRES_META_PASSWORD}
-#       POSTGRES_DB: ${POSTGRES_META_DB}
-#     ports:
-#       - "5433:5432"
-#     volumes:
-#       - pg_meta_data:/var/lib/postgresql/data
