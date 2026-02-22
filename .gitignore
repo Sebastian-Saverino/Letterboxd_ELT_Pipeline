@@ -9,3 +9,4 @@ webserver_config.py
 airflow.cfg
 airflow.db
 logs
+.venv_dbt/
