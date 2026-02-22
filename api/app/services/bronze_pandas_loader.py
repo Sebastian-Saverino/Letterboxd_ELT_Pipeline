@@ -80,13 +80,6 @@ def _warehouse_engine():
 
 
 def find_latest_key(prefix: str, suffix: str, bucket: str = RAW_BUCKET) -> str:
-    """
-    Lists objects under `prefix` and returns the key with the newest LastModified
-    where Key endswith `suffix`.
-
-    Example:
-      find_latest_key(prefix="letterboxd/", suffix="_ratings.csv")
-    """
     client = s3_client()
     token: Optional[str] = None
     best_key: Optional[str] = None
@@ -154,12 +147,6 @@ def load_one_csv_to_bronze(object_key: str, target_table: str):
 
 
 def load_latest_to_bronze(target_table: str, prefix: str = "letterboxd/") -> str:
-    """
-    Finds the latest file for a given target_table and loads it into bronze.<target_table>.
-
-    Assumes your MinIO naming convention ends with:
-      *_ratings.csv, *_watched.csv, *_watchlist.csv, *_diary.csv
-    """
     target_table = target_table.lower()
     suffix = f"_{target_table}.csv"
     key = find_latest_key(prefix=prefix, suffix=suffix, bucket=RAW_BUCKET)
