@@ -78,6 +78,20 @@ services:
       timeout: 5s
       retries: 10
 
+
+
+  dbt:
+    build:
+      context: .
+      dockerfile: dbt/Dockerfile
+    working_dir: /usr/app
+    entrypoint: ["dbt"]
+    volumes:
+      - ./dbt/letterboxd:/usr/app
+      - ./dbt/profiles.yml:/root/.dbt/profiles.yml
+    depends_on:
+      - postgres-warehouse
+
   # API (FastAPI)
   
   api:
@@ -101,7 +115,6 @@ volumes:
   minio_data:
   pg_meta_data:
   postgres_warehouse_data:
-
 
 
 
