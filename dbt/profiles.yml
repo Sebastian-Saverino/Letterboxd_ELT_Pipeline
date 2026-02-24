@@ -1,12 +1,12 @@
 letterboxd:
+  target: dev
   outputs:
     dev:
-      dbname: letterboxd_warehouse
-      host: postgres
-      pass: SebAntSav47054!
+      type: postgres
+      host: postgres-warehouse
       port: 5432
+      user: postgres
+      password: SebAntSav47054!
+      dbname: letterboxd_warehouse
       schema: silver
       threads: 4
-      type: postgres
-      user: postgres
-  target: dev
