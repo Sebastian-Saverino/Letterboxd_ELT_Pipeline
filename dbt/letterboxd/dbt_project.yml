@@ -15,6 +15,6 @@ clean-targets:
   - "dbt_packages"
 
 models:
-  letterboxd:
+  letterboxd: 
     +schema: ""
     +materialized: table
