@@ -11,3 +11,4 @@ airflow.db
 logs
 .venv_dbt/
 profiles.yml
+.log
