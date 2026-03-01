@@ -1,33 +1,9 @@
-==================== 2026-02-28T07:39:36.208400Z | 0849ad03-e042-4605-b10d-afbaecd0c478 ====================
-07:39:36.208445 [info ]: Starting dbt LSP server
-07:39:36.208460 [info ]: Connecting to LSP client on port 8000
-07:39:36.210106 [info ]: Successfully connected to LSP client
-07:39:36.210126 [info ]: Creating LSP service...
-07:39:36.268658 [info ]: Creating LSP server...
-07:39:36.268681 [info ]: Starting LSP server...
-07:39:36.304979 [info ]: Started loading project
-07:39:36.305311 [info ]: Finished loading project [  0.00s]
-07:41:30.773528 [info ]: Started loading project
-07:41:30.773712 [info ]: Finished loading project [  0.00s]
-07:56:17.330676 [info ]: Started loading project
-07:56:17.361338 [info ]: Finished loading project [  0.03s]
-07:58:23.722104 [info ]: Started loading project
-07:58:23.741562 [info ]: Finished loading project [  0.02s]
-07:58:24.054109 [info ]: Started loading project
-07:58:24.054519 [info ]: Finished loading project [  0.00s]
-07:59:26.953662 [info ]: Started loading project
-07:59:26.954769 [info ]: Finished loading project [  0.00s]
-07:59:27.294667 [info ]: Started loading project
-07:59:27.295093 [info ]: Finished loading project [  0.00s]
-08:00:50.091025 [info ]: Started loading project
-08:00:50.093252 [info ]: Finished loading project [  0.00s]
-08:00:50.428063 [info ]: Started loading project
-08:00:50.428462 [info ]: Finished loading project [  0.00s]
-08:00:50.765948 [info ]: Started loading project
-08:00:50.767583 [info ]: Finished loading project [  0.00s]
-08:00:51.105711 [info ]: Started loading project
-08:00:51.106048 [info ]: Finished loading project [  0.00s]
-08:00:51.161472 [info ]: Started loading project
-08:00:51.162890 [info ]: Finished loading project [  0.00s]
-08:00:51.568068 [info ]: Started loading project
-08:00:51.568442 [info ]: Finished loading project [  0.00s]
+==================== 2026-03-01T06:59:23.704592Z | b91ae304-cbcc-40ba-b035-b886c1c4f8a5 ====================
+06:59:23.704702 [info ]: Starting dbt LSP server
+06:59:23.704738 [info ]: Connecting to LSP client on port 8001
+06:59:23.706305 [info ]: Successfully connected to LSP client
+06:59:23.706327 [info ]: Creating LSP service...
+06:59:23.752705 [info ]: Creating LSP server...
+06:59:23.752725 [info ]: Starting LSP server...
+06:59:23.983765 [info ]: Started loading project
+06:59:23.986872 [info ]: Finished loading project [  0.00s]

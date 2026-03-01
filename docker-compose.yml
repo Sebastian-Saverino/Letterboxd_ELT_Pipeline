@@ -77,21 +77,51 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+  # dbt:
+  #   build:
+  #     context: .
+  #   container_name: dbt
+  #   entrypoint: ["dbt"]
+  #   environment:
+  #     DBT_PROFILES_DIR: /usr/dbt
+  #   volumes:
+  #     - ./dbt_project:/usr/dbt
+  #   working_dir: /usr/dbt
+  #   depends_on:
+  #     postgres-warehouse:
+  #       condition: service_healthy
+  #   command: ["--version"]
+
+  # dbt:
+  #   build:
+  #     context: .
+  #     dockerfile: dbt/Dockerfile
+  #   working_dir: /usr/app
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./dbt/letterboxd:/usr/app
+  #     - ./dbt/profiles.yml:/root/.dbt/profiles.yml
+  #   environment:
+  #     - DBT_PROFILES_DIR=/root/.dbt
+  #   depends_on:
+  #     - postgres-warehouse
+
   dbt:
     build:
       context: .
-    container_name: dbt
-    entrypoint: ["dbt"]
-    environment:
-      DBT_PROFILES_DIR: /usr/app/dbt
+      dockerfile: dbt/Dockerfile
+    container_name: letterboxd_dbt
+    working_dir: /usr/app
+    env_file:
+      - .env
     volumes:
-      - ./dbt_project:/usr/app/dbt
-    working_dir: /usr/app/dbt
+      - ./dbt/letterboxd:/usr/app
+      - ./dbt/profiles.yml:/root/.dbt/profiles.yml
+    environment:
+      - DBT_PROFILES_DIR=/root/.dbt
     depends_on:
-      postgres-warehouse:
-        condition: service_healthy
-    command: ["--version"]
-
+      - postgres-warehouse
   # API (FastAPI)
   
   api:
