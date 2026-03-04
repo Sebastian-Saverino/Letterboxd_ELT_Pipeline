@@ -63,3 +63,12 @@
 07:39:18.789575 [info ]: Finished loading project [  0.00s]
 07:39:19.242103 [info ]: Started loading project
 07:39:19.242455 [info ]: Finished loading project [  0.00s]
+==================== 2026-03-03T07:09:04.620218Z | 8b4b37e6-71a3-4f5b-a0a5-41ea12e5f9bd ====================
+07:09:04.622641 [info ]: Starting dbt LSP server
+07:09:04.623644 [info ]: Connecting to LSP client on port 8000
+07:09:04.626106 [info ]: Successfully connected to LSP client
+07:09:04.626130 [info ]: Creating LSP service...
+07:09:04.705719 [info ]: Creating LSP server...
+07:09:04.705742 [info ]: Starting LSP server...
+07:09:05.005741 [info ]: Started loading project
+07:09:05.045885 [info ]: Finished loading project [  0.04s]
