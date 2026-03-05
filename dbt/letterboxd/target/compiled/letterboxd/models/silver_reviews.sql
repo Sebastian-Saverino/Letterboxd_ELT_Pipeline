@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='silver') }}
+
 
 with src as (
     select
@@ -8,9 +8,10 @@ with src as (
         nullif(trim(letterboxd_uri::text), '') as letterboxd_uri,
         nullif(trim(rating::text), '') as rating_txt,
         nullif(trim(rewatch::text), '') as rewatch_txt,
+        nullif(trim(review::text), '') as review,
         nullif(trim(tags::text), '') as tags,
         nullif(trim(watched_date::text), '') as watched_date_txt
-    from {{ source('bronze', 'diary') }}
+    from "letterboxd_warehouse"."bronze"."reviews"
 ),
 
 typed as (
@@ -27,6 +28,7 @@ typed as (
             else null
         end as rewatch,
 
+        review,
         tags,
 
         case
@@ -42,7 +44,7 @@ deduped as (
         select
             *,
             row_number() over (
-                partition by letterboxd_uri, watched_date, rating
+                partition by letterboxd_uri, watched_date
                 order by list_date desc nulls last
             ) as rn
         from typed
@@ -57,6 +59,7 @@ select
     letterboxd_uri,
     rating,
     rewatch,
+    review,
     tags,
     watched_date
 from deduped

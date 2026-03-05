@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='silver') }}
+
 
 with src as (
     select
@@ -15,7 +15,7 @@ with src as (
         nullif(trim(bio::text), '') as bio,
         nullif(trim(pronoun::text), '') as pronoun,
         nullif(trim(favorite_films::text), '') as favorite_films
-    from {{ source('bronze', 'profile') }}
+    from "letterboxd_warehouse"."bronze"."profile"
 ),
 
 typed as (

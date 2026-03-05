@@ -2,7 +2,7 @@
   
     
 
-  create  table "letterboxd_warehouse"."sivler_silver"."silver_ratings__dbt_tmp"
+  create  table "letterboxd_warehouse"."silver_silver"."silver_ratings__dbt_tmp"
   
   
     as

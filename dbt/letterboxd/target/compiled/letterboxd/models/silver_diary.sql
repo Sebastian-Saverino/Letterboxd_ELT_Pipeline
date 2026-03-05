@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='silver') }}
+
 
 with src as (
     select
@@ -10,7 +10,7 @@ with src as (
         nullif(trim(rewatch::text), '') as rewatch_txt,
         nullif(trim(tags::text), '') as tags,
         nullif(trim(watched_date::text), '') as watched_date_txt
-    from {{ source('bronze', 'diary') }}
+    from "letterboxd_warehouse"."bronze"."diary"
 ),
 
 typed as (

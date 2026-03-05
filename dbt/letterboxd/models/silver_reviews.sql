@@ -63,4 +63,4 @@ select
     tags,
     watched_date
 from deduped
-where letterboxd_uri is not null;
+where letterboxd_uri is not null
