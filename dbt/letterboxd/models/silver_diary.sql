@@ -1,52 +1,63 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table', schema='silver') }}
 
 with src as (
-
     select
-        -- raw columns (keep the quoted names if your bronze table kept CSV headers)
-        "Date" as list_date_raw,
-        "Name" as name_raw,
-        "Year" as year_raw,
-        "Letterboxd URI" as letterboxd_uri_raw,
-        "Rating" as rating_raw,
-        "Rewatch" as rewatch_raw,
-        "Tags" as tags_raw,
-        "Watched Date" as watched_date_raw
-
-    from {{ source('bronze', 'bronze_diary') }}
-
+        nullif(trim(list_date::text), '') as list_date_txt,
+        nullif(trim(name::text), '') as name,
+        nullif(trim(year::text), '') as year_txt,
+        nullif(trim(letterboxd_uri::text), '') as letterboxd_uri,
+        nullif(trim(rating::text), '') as rating_txt,
+        nullif(trim(rewatch::text), '') as rewatch_txt,
+        nullif(trim(tags::text), '') as tags,
+        nullif(trim(watched_date::text), '') as watched_date_txt
+    from {{ source('bronze', 'diary') }}
 ),
 
-clean as (
-
+typed as (
     select
-        -- Dates: Letterboxd exports are usually yyyy-mm-dd (but we defensively null-out blanks)
-        nullif(trim(list_date_raw), '')::date as list_date,
+        case when list_date_txt ~ '^\d{4}-\d{2}-\d{2}$' then list_date_txt::date end as list_date,
+        name,
+        case when year_txt ~ '^\d{4}$' then year_txt::int end as year,
+        letterboxd_uri,
+        case when rating_txt ~ '^\d+(\.\d+)?$' then rating_txt::numeric(3,1) end as rating,
 
-        nullif(trim(name_raw), '') as name,
-
-        nullif(trim(year_raw), '')::int as year,
-
-        nullif(trim(letterboxd_uri_raw), '') as letterboxd_uri,
-
-        -- Rating: often like "3.5" or blank
-        nullif(trim(rating_raw), '')::numeric(3,1) as rating,
-
-        -- Rewatch: often "Yes"/"" (or "No"). Normalize to boolean.
         case
-            when lower(trim(rewatch_raw)) in ('yes', 'y', 'true', '1') then true
-            when lower(trim(rewatch_raw)) in ('no', 'n', 'false', '0') then false
-            when nullif(trim(rewatch_raw), '') is null then false
+            when lower(rewatch_txt) in ('yes','y','true','t','1') then true
+            when lower(rewatch_txt) in ('no','n','false','f','0') then false
             else null
-        end as is_rewatch,
+        end as rewatch,
 
-        -- Tags: keep as a single string for now (you can split later in a bridge table)
-        nullif(trim(tags_raw), '') as tags,
+        tags,
 
-        nullif(trim(watched_date_raw), '')::date as watched_date
-
+        case
+            when watched_date_txt ~ '^\d{4}-\d{2}-\d{2}$' then watched_date_txt::date
+            else null
+        end as watched_date
     from src
+),
+
+deduped as (
+    select *
+    from (
+        select
+            *,
+            row_number() over (
+                partition by letterboxd_uri, watched_date, rating
+                order by list_date desc nulls last
+            ) as rn
+        from typed
+    ) t
+    where rn = 1
 )
 
-select *
-from clean;
+select
+    list_date,
+    name,
+    year,
+    letterboxd_uri,
+    rating,
+    rewatch,
+    tags,
+    watched_date
+from deduped
+where letterboxd_uri is not null;
