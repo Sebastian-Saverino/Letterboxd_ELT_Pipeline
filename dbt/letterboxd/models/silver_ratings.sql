@@ -1,13 +1,13 @@
+{{ config(materialized='table', schema='silver') }}
 
-
-with src as (
+WITH src AS (
     select
         nullif(trim(list_date), '') as list_date_txt,
         nullif(trim(name), '') as name,
         nullif(trim(year), '') as year_txt,
         nullif(trim(letterboxd_uri), '') as letterboxd_uri,
         nullif(trim(rating), '') as rating_txt
-    from "letterboxd_warehouse"."bronze"."ratings"
+    from {{ source('bronze', 'ratings') }}
 ),
 
 typed as (

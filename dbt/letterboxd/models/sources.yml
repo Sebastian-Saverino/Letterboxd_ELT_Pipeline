@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    tables:
+      - name: ratings
+      - name: watched
+      - name: watchlist
+      - name: diary
+      - name: reviews
+      - name: profile

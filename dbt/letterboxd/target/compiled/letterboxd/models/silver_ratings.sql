@@ -1,16 +1,6 @@
 
-  
-    
 
-  create  table "letterboxd_warehouse"."silver_silver"."silver_ratings__dbt_tmp"
-  
-  
-    as
-  
-  (
-    
-
-with src as (
+WITH src AS (
     select
         nullif(trim(list_date), '') as list_date_txt,
         nullif(trim(name), '') as name,
@@ -51,5 +41,3 @@ select
     letterboxd_uri,
     rating
 from deduped
-  );
-  

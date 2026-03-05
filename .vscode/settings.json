@@ -1,0 +1,6 @@
+{
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/dbt-labs/dbt-jsonschema/main/schemas/latest/dbt_project-latest.json": "file:///c%3A/Users/saver/01_PROJECT/Letterboxd_Data_Pipeline/dbt/letterboxd/dbt_project.yml"
+    },
+    "dbt.dbtIntegration": "core"
+}
