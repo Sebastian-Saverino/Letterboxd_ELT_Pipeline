@@ -1,0 +1,9 @@
+==================== 2026-03-05T06:17:12.998166Z | decdc80b-f6c0-40eb-8e23-80860f4f7d09 ====================
+06:17:13.000391 [info ]: Starting dbt LSP server
+06:17:13.001138 [info ]: Connecting to LSP client on port 8001
+06:17:13.003152 [info ]: Successfully connected to LSP client
+06:17:13.003166 [info ]: Creating LSP service...
+06:17:13.092193 [info ]: Creating LSP server...
+06:17:13.092215 [info ]: Starting LSP server...
+06:17:13.579646 [info ]: Started loading project
+06:17:13.597391 [info ]: Finished loading project [  0.02s]
