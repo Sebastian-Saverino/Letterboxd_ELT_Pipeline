@@ -1,4 +1,14 @@
-{{ config(materialized='table', schema='silver') }}
+
+  
+    
+
+  create  table "letterboxd_warehouse"."silver_silver"."silver_diary__dbt_tmp"
+  
+  
+    as
+  
+  (
+    
 
 with src as (
     select
@@ -10,7 +20,7 @@ with src as (
         nullif(trim(rewatch::text), '') as rewatch_txt,
         nullif(trim(tags::text), '') as tags,
         nullif(trim(watched_date::text), '') as watched_date_txt
-    from {{ source('bronze', 'diary') }}
+    from "letterboxd_warehouse"."bronze"."diary"
 ),
 
 typed as (
@@ -61,3 +71,5 @@ select
     watched_date
 from deduped
 where letterboxd_uri is not null
+  );
+  

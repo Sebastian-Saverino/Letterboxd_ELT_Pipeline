@@ -1,4 +1,14 @@
-{{ config(materialized='table', schema='silver') }}
+
+  
+    
+
+  create  table "letterboxd_warehouse"."silver_silver"."silver_profile__dbt_tmp"
+  
+  
+    as
+  
+  (
+    
 
 with src as (
     select
@@ -15,7 +25,7 @@ with src as (
         nullif(trim(bio::text), '') as bio,
         nullif(trim(pronoun::text), '') as pronoun,
         nullif(trim(favorite_films::text), '') as favorite_films
-    from {{ source('bronze', 'profile') }}
+    from "letterboxd_warehouse"."bronze"."profile"
 ),
 
 typed as (
@@ -67,3 +77,5 @@ select
     favorite_films
 from deduped
 where username is not null
+  );
+  

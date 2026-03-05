@@ -56,11 +56,6 @@ select
     list_date,
     name,
     year,
-    letterboxd_uri,
-    rating,
-    rewatch,
-    review,
-    tags,
-    watched_date
+    letterboxd_uri
 from deduped
-where letterboxd_uri is not null;
+where letterboxd_uri is not null
