@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: gold_top_rated_movies
+    description: Top 10 highest rated movies from Letterboxd ratings data.
+
+  - name: gold_watchlist_by_year
+    description: Count of watchlist movies grouped by release year.
+
+  - name: gold_lowest_rated_movie
+    description: Lowest rated movie from Letterboxd ratings data.
+
+  - name: gold_best_movie_year
+    description: Best movie year based on average rating, requiring at least 3 rated films.
+
+  - name: gold_recent_watch
+    description: Most recently watched movie from diary data.
+
+  - name: gold_watch_activity.sql
+    description: Overall watch history
