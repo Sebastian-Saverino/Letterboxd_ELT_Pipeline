@@ -1,7 +1,11 @@
+{{ config(materialized='table') }}
+
 SELECT
     name,
     year,
-    rating
+    rating,
+    letterboxd_uri
 FROM {{ ref('silver_ratings') }}
-ORDER BY rating ASC
-LIMIT 10
+WHERE rating IS NOT NULL
+ORDER BY rating ASC, year DESC, name ASC
+LIMIT 1

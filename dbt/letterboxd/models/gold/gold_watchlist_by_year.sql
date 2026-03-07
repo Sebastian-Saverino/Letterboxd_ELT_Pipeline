@@ -1,6 +1,9 @@
+{{ config(materialized='table') }}
+
 SELECT
     year,
-    COUNT(*) AS films_in_watchlist
+    COUNT(*) AS watchlist_count
 FROM {{ ref('silver_watchlist') }}
+WHERE year IS NOT NULL
 GROUP BY year
-ORDER BY year
+ORDER BY year ASC
