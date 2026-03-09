@@ -1,4 +1,4 @@
--- {{ config(materialized='table', schema='gold') }}
+-- 
 
 SELECT
     name,
@@ -7,7 +7,7 @@ SELECT
     rating,
     rewatch,
     letterboxd_uri
-FROM {{ ref('silver_diary') }}
+FROM "letterboxd_warehouse"."silver"."silver_diary"
 WHERE watched_date IS NOT NULL
 ORDER BY watched_date DESC, name ASC
 LIMIT 1
