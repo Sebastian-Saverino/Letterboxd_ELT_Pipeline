@@ -20,6 +20,7 @@ FastAPI (Extract), Postgres(Load / Data Warehouse), MinIO (Data Lake), dbt(Trans
 
 
 
+<img width="1348" height="845" alt="image" src="https://github.com/user-attachments/assets/907f6581-ea92-4a6c-8363-1ae63b58fff1" />
 
 
 
