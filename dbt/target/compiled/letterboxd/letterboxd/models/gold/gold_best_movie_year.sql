@@ -1,10 +1,10 @@
--- {{ config(materialized='table', schema='gold') }}
+-- 
 
 SELECT
     year,
     COUNT(*) AS films_rated,
     ROUND(AVG(rating)::numeric, 2) AS avg_rating
-FROM {{ ref('silver_ratings') }}
+FROM "letterboxd_warehouse"."silver"."silver_ratings"
 WHERE rating IS NOT NULL
   AND year IS NOT NULL
 GROUP BY year

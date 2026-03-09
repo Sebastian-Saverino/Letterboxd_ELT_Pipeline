@@ -4,11 +4,11 @@ version: "1.0.0"
 
 profile: letterboxd
 
-model-paths: ["models"]
+model-paths: ["letterboxd/models"]
 seed-paths: ["seeds"]
 test-paths: ["tests"]
 analysis-paths: ["analyses"]
-macro-paths: ["macros"]
+macro-paths: ["letterboxd/macros"]
 snapshot-paths: ["snapshots"]
 docs-paths: ["docs"]
 
@@ -16,17 +16,21 @@ packages-install-path: "dbt_packages"
 
 clean-targets: ["target", "dbt_packages"]
 
-# Optional: adds a comment to every query dbt runs (useful for debugging)
 query-comment: "letterboxd dbt"
 
 models:
   letterboxd:
-    +materialized: table
-    +schema: "silver"
+    silver:
+      +schema: silver
+      +materialized: table
+
+    gold:
+      +schema: gold
+      +materialized: view
 
 seeds:
   letterboxd:
-    +schema: "seeds"
+    +schema: seeds
 
 snapshots:
   letterboxd:
