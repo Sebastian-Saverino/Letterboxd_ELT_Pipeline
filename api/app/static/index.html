@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Letterboxd CSV Upload</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>Letterboxd CSV Upload</h1>
+      <p class="subtitle">Upload a Letterboxd export file to the ingestion pipeline.</p>
+
+      <form id="uploadForm">
+        <label for="csvFile" class="label">Choose CSV file</label>
+        <input type="file" id="csvFile" name="file" accept=".csv" required />
+
+        <button type="submit">Upload CSV</button>
+      </form>
+
+      <div id="status" class="status hidden"></div>
+
+      <div id="result" class="result hidden">
+        <h2>Upload Result</h2>
+        <pre id="resultContent"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
