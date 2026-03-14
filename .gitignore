@@ -12,6 +12,6 @@ logs
 .venv_dbt/
 profiles.yml
 .log
-metabase_pg_data
+metabase_pg_data/
 metabase.db.mv.db
 metabase.db.trace.db
