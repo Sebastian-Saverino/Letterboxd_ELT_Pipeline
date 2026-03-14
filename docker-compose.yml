@@ -49,8 +49,6 @@ services:
       POSTGRES_USER: ${POSTGRES_META_USER}
       POSTGRES_PASSWORD: ${POSTGRES_META_PASSWORD}
       POSTGRES_META_DB: ${POSTGRES_META_DB}
-    # ports:
-    #   - "5434:5432"   # host:container (host port is optional; keep if you want psql from your machine)
     volumes:
       - pg_meta_data:/var/lib/postgresql/data
     healthcheck:
@@ -78,22 +76,6 @@ services:
       timeout: 5s
       retries: 10
 
-
-  # dbt:
-  #   build:
-  #     context: .
-  #     dockerfile: dbt/Dockerfile
-  #   container_name: letterboxd_dbt
-  #   working_dir: /usr/app
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./dbt/letterboxd:/usr/app
-  #     - ./dbt/profiles.yml:/root/.dbt/profiles.yml/profiles.yml
-  #   environment:
-  #     - DBT_PROFILES_DIR=/root/.dbt
-  #   depends_on:
-  #     - postgres-warehouse
   dbt:
     build:
       context: .
@@ -112,9 +94,6 @@ services:
     command: tail -f /dev/null
     ports:
     - "8080:8080"
-
-
-
 
 
   metabase:
