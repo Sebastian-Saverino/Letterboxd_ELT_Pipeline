@@ -235,9 +235,11 @@ select * from gold.gold_top_rated_movies limit 10;
 select * from gold.gold_recent_watch;
 ```
 
-## Metabase Dashboard
+## Letterboxd Dashboard
 
-[View the Metabase Dashboard PDF](docs/Metabase%20-%20Letterboxd%20Data%20Analytics%20Dashboard.pdf)
+
+![Letterboxd Visualization](images/Letterboxd_Visualization.png)
+
 
 ## Future Improvements
 
