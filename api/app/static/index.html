@@ -3,28 +3,111 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Letterboxd CSV Upload</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <title>Letterboxd Pipeline Ingest</title>
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <main class="container">
-    <section class="card">
-      <h1>Letterboxd CSV Upload</h1>
-      <p class="subtitle">Upload a Letterboxd export file to the ingestion pipeline.</p>
+  <main class="page-shell">
+    <section class="page-header">
+      <p class="eyebrow">Letterboxd Data Pipeline</p>
+      <h1>Ingest Letterboxd CSV exports</h1>
+      <p class="page-intro">
+        Upload a Letterboxd dataset to the raw ingestion pipeline. The file is stored in object
+        storage and registered for downstream processing.
+      </p>
+    </section>
 
-      <form id="uploadForm">
-        <label for="csvFile" class="label">Choose CSV file</label>
-        <input type="file" id="csvFile" name="file" accept=".csv" required />
+    <section class="layout">
+      <aside class="panel panel-muted">
+        <h2>Upload guidance</h2>
+        <p class="panel-copy">
+          Use this tool for raw Letterboxd CSV exports only. The submission flow remains the same,
+          but the page now gives clearer validation and upload feedback.
+        </p>
 
-        <button type="submit">Upload CSV</button>
-      </form>
+        <dl class="details-list">
+          <div>
+            <dt>Accepted format</dt>
+            <dd>Single `.csv` file</dd>
+          </div>
+          <div>
+            <dt>Pipeline source</dt>
+            <dd>`letterboxd_csv`</dd>
+          </div>
+          <div>
+            <dt>Upload target</dt>
+            <dd>Raw object storage plus ingestion metadata</dd>
+          </div>
+        </dl>
 
-      <div id="status" class="status hidden"></div>
+        <div class="note">
+          <h3>Before submitting</h3>
+          <ul class="checklist">
+            <li>Confirm the export came directly from Letterboxd.</li>
+            <li>Upload one dataset file per run.</li>
+            <li>Review the response payload after a successful ingest.</li>
+          </ul>
+        </div>
+      </aside>
 
-      <div id="result" class="result hidden">
-        <h2>Upload Result</h2>
-        <pre id="resultContent"></pre>
-      </div>
+      <section class="panel panel-form">
+        <div class="section-heading">
+          <h2>Upload dataset</h2>
+          <p>Select a CSV file and submit it to the ingest endpoint.</p>
+        </div>
+
+        <form id="uploadForm" novalidate>
+          <div class="field">
+            <div class="field-header">
+              <label for="csvFile" class="label">Dataset file</label>
+              <p class="helper-text">Required. Accepted file type: `.csv`.</p>
+            </div>
+
+            <label for="csvFile" class="dropzone" id="dropzone">
+              <input
+                type="file"
+                id="csvFile"
+                name="file"
+                accept=".csv"
+                required
+                class="visually-hidden"
+              />
+              <span class="dropzone-title">Drag and drop a CSV file here</span>
+              <span class="dropzone-subtitle">or click to browse from your device</span>
+            </label>
+
+            <div class="file-summary" id="fileSummary" aria-live="polite">
+              <p class="file-summary-label">Selected file</p>
+              <p class="file-summary-name" id="fileName">No file selected</p>
+              <p class="file-summary-meta" id="fileMeta">Choose a Letterboxd CSV export to continue.</p>
+            </div>
+
+            <p id="fileMessage" class="field-message hidden" aria-live="polite"></p>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="submitButton" class="button-primary">Upload dataset</button>
+            <p class="helper-text helper-text-inline">
+              Submission posts the selected file to `/ingest/letterboxd/upload`.
+            </p>
+          </div>
+        </form>
+
+        <div id="status" class="status hidden" role="status" aria-live="polite"></div>
+
+        <section id="result" class="result hidden" aria-live="polite">
+          <div class="result-header">
+            <div>
+              <h2>Ingestion response</h2>
+              <p class="helper-text helper-text-inline">
+                Returned by the existing upload endpoint after the request completes.
+              </p>
+            </div>
+            <span class="result-badge" id="resultBadge">Ready</span>
+          </div>
+          <pre id="resultContent"></pre>
+        </section>
+      </section>
     </section>
   </main>
 
