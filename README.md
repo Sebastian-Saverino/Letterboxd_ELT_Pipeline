@@ -235,12 +235,15 @@ select * from gold.gold_top_rated_movies limit 10;
 select * from gold.gold_recent_watch;
 ```
 
+## Metabase Dashboard
+
+[View the Metabase Dashboard PDF](docs/Metabase%20-%20Letterboxd%20Data%20Analytics%20Dashboard.pdf)
+
 ## Future Improvements
 
 - Add Airflow orchestration for scheduled ingestion, bronze loads, and dbt runs
 - Track bronze load runs and idempotency more explicitly
 - Add automated API and loader tests
 - Add warehouse model contracts and broader dbt test coverage
-- Publish curated Metabase dashboards and screenshots
 - Add CI checks for container builds, dbt parse, and linting
 
