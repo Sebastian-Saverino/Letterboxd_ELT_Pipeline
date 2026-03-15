@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
    # Object Storage (MinIO)
   
@@ -48,7 +46,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_META_USER}
       POSTGRES_PASSWORD: ${POSTGRES_META_PASSWORD}
-      POSTGRES_META_DB: ${POSTGRES_META_DB}
+      POSTGRES_DB: ${POSTGRES_META_DB}
     volumes:
       - pg_meta_data:/var/lib/postgresql/data
     healthcheck:
@@ -76,6 +74,20 @@ services:
       timeout: 5s
       retries: 10
 
+  db_bootstrap:
+    image: postgres:16
+    container_name: letterboxd_db_bootstrap
+    env_file:
+      - .env
+    depends_on:
+      postgres-meta:
+        condition: service_healthy
+      postgres-warehouse:
+        condition: service_healthy
+    volumes:
+      - ./infra/bootstrap:/bootstrap:ro
+    entrypoint: ["/bin/sh", "/bootstrap/bootstrap.sh"]
+
   dbt:
     build:
       context: .
@@ -90,10 +102,24 @@ services:
     environment:
       - DBT_PROFILES_DIR=/root/.dbt
     depends_on:
-      - postgres-warehouse
+      db_bootstrap:
+        condition: service_completed_successfully
     command: tail -f /dev/null
-    ports:
-    - "8080:8080"
+
+  bronze_loader:
+    build:
+      context: ./bronze_loader
+      dockerfile: Dockerfile
+    container_name: letterboxd_bronze_loader
+    env_file:
+      - .env
+    depends_on:
+      minio:
+        condition: service_healthy
+      db_bootstrap:
+        condition: service_completed_successfully
+    profiles:
+      - tooling
 
 
   metabase:
@@ -106,10 +132,10 @@ services:
       - "3000:3000"
     environment:
       MB_DB_TYPE: postgres
-      MB_DB_DBNAME: metabaseappdb
+      MB_DB_DBNAME: ${METABASE_APP_DB}
       MB_DB_PORT: 5432
-      MB_DB_USER: metabase
-      MB_DB_PASS: mysecretpassword
+      MB_DB_USER: ${METABASE_APP_USER}
+      MB_DB_PASS: ${METABASE_APP_PASSWORD}
       MB_DB_HOST: metabase-postgres
     depends_on:
       - metabase-postgres
@@ -124,11 +150,11 @@ services:
     container_name: metabase-postgres
     hostname: metabase-postgres
     environment:
-      POSTGRES_USER: metabase
-      POSTGRES_DB: metabaseappdb
-      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_USER: ${METABASE_APP_USER}
+      POSTGRES_DB: ${METABASE_APP_DB}
+      POSTGRES_PASSWORD: ${METABASE_APP_PASSWORD}
     volumes:
-      - ./metabase_pg_data:/var/lib/postgresql/data
+      - metabase_pg_data:/var/lib/postgresql/data
   # API (FastAPI)
   
   api:
@@ -139,19 +165,20 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/api
+      - ./api/app:/app/app
     ports:
       - "8000:8000"
     depends_on:
       minio:
         condition: service_healthy
-      postgres-meta:
-        condition: service_healthy
+      db_bootstrap:
+        condition: service_completed_successfully
 
 volumes:
   minio_data:
   pg_meta_data:
   postgres_warehouse_data:
+  metabase_pg_data:
 
 
 

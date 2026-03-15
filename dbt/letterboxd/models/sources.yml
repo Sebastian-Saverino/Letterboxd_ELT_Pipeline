@@ -5,8 +5,72 @@ sources:
     schema: bronze
     tables:
       - name: ratings
+        columns:
+          - name: letterboxd_uri
+            tests:
+              - not_null
+              - unique
+          - name: name
+            tests:
+              - not_null
+          - name: rating
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['0.5', '1.0', '1.5', '2.0', '2.5', '3.0', '3.5', '4.0', '4.5', '5.0']
+                    quote: true
+
       - name: watched
+        columns:
+          - name: letterboxd_uri
+            tests:
+              - not_null
+              - unique
+          - name: name
+            tests:
+              - not_null
+
       - name: watchlist
+        columns:
+          - name: letterboxd_uri
+            tests:
+              - not_null
+              - unique
+          - name: name
+            tests:
+              - not_null
+
       - name: diary
+        columns:
+          - name: letterboxd_uri
+            tests:
+              - not_null
+          - name: name
+            tests:
+              - not_null
+          - name: watched_date
+            tests:
+              - not_null
+
       - name: reviews
+        columns:
+          - name: letterboxd_uri
+            tests:
+              - not_null
+          - name: name
+            tests:
+              - not_null
+          - name: rating
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['0.5', '1.0', '1.5', '2.0', '2.5', '3.0', '3.5', '4.0', '4.5', '5']
+                    quote: true
+
       - name: profile
+        columns:
+          - name: username
+            tests:
+              - not_null
+              - unique

@@ -1,5 +1,3 @@
-# api/app/routes/ingest.py
-
 import hashlib
 import os
 from datetime import datetime, timezone

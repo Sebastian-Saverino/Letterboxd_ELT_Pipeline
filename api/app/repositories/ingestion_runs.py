@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 from typing import Optional
 from uuid import UUID
 
-from app.db.session import session_scope
-from app.repositories.ingestion_runs import upsert_ingestion_run as upsert_ingestion_run_record
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
+
+from app.db.models import IngestionRun
+
 
 def upsert_ingestion_run(
+    session: Session,
     *,
     ingestion_id: UUID,
     source: str,
@@ -15,9 +21,9 @@ def upsert_ingestion_run(
     content_type: Optional[str],
     status: str = "uploaded",
 ) -> UUID:
-    with session_scope() as session:
-        return upsert_ingestion_run_record(
-            session,
+    stmt = (
+        insert(IngestionRun)
+        .values(
             ingestion_id=ingestion_id,
             source=source,
             original_filename=original_filename,
@@ -27,3 +33,9 @@ def upsert_ingestion_run(
             content_type=content_type,
             status=status,
         )
+        .on_conflict_do_nothing(index_elements=[IngestionRun.ingestion_id])
+        .returning(IngestionRun.ingestion_id)
+    )
+
+    inserted_id = session.execute(stmt).scalar_one_or_none()
+    return inserted_id or ingestion_id

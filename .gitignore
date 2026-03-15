@@ -3,6 +3,8 @@
 .DS_Store # macOS specific ignore
 airflow_settings.yaml
 __pycache__/
+**/__pycache__/
+*.pyc
 .venv
 airflow-webserver.pid
 webserver_config.py
@@ -11,7 +13,14 @@ airflow.db
 logs
 .venv_dbt/
 profiles.yml
-.log
+*.log
+*.pid
+dbt/target/
+dbt/**/target/
+dbt/logs/
+dbt/**/logs/
+dbt_project/logs/
+dbt/profiles/.user.yml
 metabase_pg_data/
 metabase.db.mv.db
 metabase.db.trace.db
