@@ -4,7 +4,6 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Iterable
 
 import pendulum
 import requests
@@ -92,20 +91,6 @@ def _wait_for_api(session: requests.Session, timeout_seconds: int = 180) -> None
     raise AirflowFailException(
         f"FastAPI service was not ready within {timeout_seconds} seconds at {readiness_url}."
     )
-
-
-def _discover_exports(source_dir: Path, pattern: str) -> Iterable[Path]:
-    if not source_dir.exists():
-        raise AirflowFailException(
-            f"Ingestion source directory does not exist: {source_dir}. Place Letterboxd CSV exports there."
-        )
-
-    files = sorted(path for path in source_dir.glob(pattern) if path.is_file())
-    if not files:
-        raise AirflowFailException(
-            f"No CSV exports found in {source_dir} matching pattern '{pattern}'."
-        )
-    return files
 
 
 def _discover_local_exports(source_dir: Path, pattern: str) -> list[Path]:

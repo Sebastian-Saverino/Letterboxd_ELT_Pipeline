@@ -17,6 +17,9 @@ SERVICE ?=
 	dbt-silver \
 	dbt-gold \
 	dbt-test \
+	airflow-unpause \
+	airflow-trigger \
+	airflow-health \
 	meta-psql \
 	warehouse-psql \
 	minio-check \
@@ -63,6 +66,15 @@ dbt-gold:
 
 dbt-test:
 	$(COMPOSE) exec dbt dbt test
+
+airflow-unpause:
+	$(COMPOSE) exec airflow-scheduler airflow dags unpause letterboxd_pipeline
+
+airflow-trigger:
+	$(COMPOSE) exec airflow-scheduler airflow dags trigger letterboxd_pipeline
+
+airflow-health:
+	curl.exe -fsS http://localhost:8080/health
 
 # Health checks
 minio-check:
