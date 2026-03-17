@@ -17,6 +17,9 @@ from urllib3.util.retry import Retry
 
 LOGGER = logging.getLogger(__name__)
 SUPPORTED_DATASETS = ("diary", "profile", "ratings", "reviews", "watched", "watchlist")
+RAW_PREFIX = os.getenv("LETTERBOXD_RAW_PREFIX", "letterboxd/")
+DBT_LOG_PATH = "/opt/airflow/logs/dbt"
+DBT_TARGET_PATH = "/opt/airflow/logs/dbt/target"
 
 
 def _api_base_url() -> str:
@@ -27,7 +30,7 @@ def _source_dir() -> Path:
     return Path(
         os.getenv(
             "LETTERBOXD_INGESTION_SOURCE_DIR",
-            "/opt/airflow/project/airflow/config/ingestion",
+            "/opt/airflow/config/ingestion",
         )
     )
 
@@ -56,7 +59,10 @@ def _build_session() -> requests.Session:
 def _infer_dataset(csv_path: Path) -> str:
     lowered = csv_path.name.lower()
     for dataset in SUPPORTED_DATASETS:
-        if lowered.endswith(f"{dataset}.csv"):
+        stem = lowered[:-4] if lowered.endswith(".csv") else lowered
+        if stem == dataset:
+            return dataset
+        if any(stem.endswith(f"{delimiter}{dataset}") for delimiter in ("_", "-", " ")):
             return dataset
     raise AirflowFailException(
         f"Unsupported export filename '{csv_path.name}'. Expected a suffix matching one of {SUPPORTED_DATASETS}."
@@ -102,6 +108,36 @@ def _discover_exports(source_dir: Path, pattern: str) -> Iterable[Path]:
     return files
 
 
+def _discover_local_exports(source_dir: Path, pattern: str) -> list[Path]:
+    if not source_dir.exists():
+        return []
+    return sorted(path for path in source_dir.glob(pattern) if path.is_file())
+
+
+def _discover_raw_datasets() -> list[str]:
+    from bronze_loader.loader import find_latest_key_for_dataset
+
+    available_datasets: list[str] = []
+    for dataset in SUPPORTED_DATASETS:
+        try:
+            object_key = find_latest_key_for_dataset(dataset=dataset, prefix=RAW_PREFIX)
+            LOGGER.info(
+                "Found existing raw object for dataset=%s object_key=%s",
+                dataset,
+                object_key,
+            )
+            available_datasets.append(dataset)
+        except FileNotFoundError:
+            continue
+
+    if not available_datasets:
+        raise AirflowFailException(
+            "No CSV exports were found in the mounted ingestion directory and no matching raw objects were found in MinIO."
+        )
+
+    return available_datasets
+
+
 default_args = {
     "owner": "data-platform",
     "depends_on_past": False,
@@ -129,10 +165,18 @@ def letterboxd_pipeline():
 
         _wait_for_api(session=session)
 
+        local_exports = _discover_local_exports(source_dir=source_dir, pattern=pattern)
+        if not local_exports:
+            LOGGER.info(
+                "No local CSV exports found in %s. Falling back to previously uploaded raw objects in MinIO.",
+                source_dir,
+            )
+            return _discover_raw_datasets()
+
         datasets: set[str] = set()
         upload_url = f"{_api_base_url()}/ingest/letterboxd/upload"
 
-        for csv_path in _discover_exports(source_dir=source_dir, pattern=pattern):
+        for csv_path in local_exports:
             dataset = _infer_dataset(csv_path)
             LOGGER.info("Uploading %s for dataset=%s", csv_path.name, dataset)
 
@@ -179,9 +223,12 @@ def letterboxd_pipeline():
         task_id="dbt_run_silver",
         bash_command=(
             "set -euo pipefail && "
+            f"mkdir -p {DBT_LOG_PATH} {DBT_TARGET_PATH} && "
             "cd /opt/airflow/project/dbt && "
             "dbt run --project-dir /opt/airflow/project/dbt "
             "--profiles-dir /opt/airflow/project/dbt/profiles "
+            f"--log-path {DBT_LOG_PATH} "
+            f"--target-path {DBT_TARGET_PATH} "
             "--select silver --target \"$DBT_TARGET\""
         ),
         execution_timeout=pendulum.duration(minutes=30),
@@ -194,9 +241,12 @@ def letterboxd_pipeline():
         task_id="dbt_run_gold",
         bash_command=(
             "set -euo pipefail && "
+            f"mkdir -p {DBT_LOG_PATH} {DBT_TARGET_PATH} && "
             "cd /opt/airflow/project/dbt && "
             "dbt run --project-dir /opt/airflow/project/dbt "
             "--profiles-dir /opt/airflow/project/dbt/profiles "
+            f"--log-path {DBT_LOG_PATH} "
+            f"--target-path {DBT_TARGET_PATH} "
             "--select gold --target \"$DBT_TARGET\""
         ),
         execution_timeout=pendulum.duration(minutes=30),

@@ -3,12 +3,14 @@ from __future__ import annotations
 import io
 import logging
 import os
+from pathlib import PurePosixPath
 from typing import Optional
 
 import boto3
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import Column, MetaData, Table, create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.sql.sqltypes import Text
 
 logger = logging.getLogger("bronze_loader.loader")
 
@@ -72,6 +74,21 @@ RENAME_MAPS = {
 
 def supported_datasets() -> list[str]:
     return sorted(RENAME_MAPS.keys())
+
+
+def infer_dataset_from_object_name(name: str) -> Optional[str]:
+    filename = PurePosixPath(name).name.lower()
+    if not filename.endswith(".csv"):
+        return None
+
+    stem = filename[:-4]
+    for dataset in supported_datasets():
+        if stem == dataset:
+            return dataset
+        for delimiter in ("_", "-", " "):
+            if stem.endswith(f"{delimiter}{dataset}"):
+                return dataset
+    return None
 
 
 def _must(name: str) -> str:
@@ -138,6 +155,41 @@ def find_latest_key(prefix: str, suffix: str, bucket: str = RAW_BUCKET) -> str:
     return best_key
 
 
+def find_latest_key_for_dataset(dataset: str, prefix: str, bucket: str = RAW_BUCKET) -> str:
+    client = s3_client()
+    token: Optional[str] = None
+    best_key: Optional[str] = None
+    best_ts = None
+    normalized_dataset = dataset.lower()
+
+    while True:
+        kwargs = {"Bucket": bucket, "Prefix": prefix}
+        if token:
+            kwargs["ContinuationToken"] = token
+
+        response = client.list_objects_v2(**kwargs)
+
+        for obj in response.get("Contents", []):
+            key = obj["Key"]
+            if infer_dataset_from_object_name(key) == normalized_dataset:
+                last_modified = obj["LastModified"]
+                if best_ts is None or last_modified > best_ts:
+                    best_ts = last_modified
+                    best_key = key
+
+        if response.get("IsTruncated"):
+            token = response.get("NextContinuationToken")
+        else:
+            break
+
+    if not best_key:
+        raise FileNotFoundError(
+            f"No object found in bucket='{bucket}' under prefix='{prefix}' for dataset '{normalized_dataset}'"
+        )
+
+    return best_key
+
+
 def load_one_csv_to_bronze(object_key: str, target_table: str) -> None:
     dataset = target_table.lower()
     if dataset not in RENAME_MAPS:
@@ -158,13 +210,37 @@ def load_one_csv_to_bronze(object_key: str, target_table: str) -> None:
         )
 
     dataframe = dataframe.rename(columns=rename_map)
-    dataframe.to_sql(
-        name=dataset,
-        con=warehouse_engine(),
-        schema="bronze",
-        if_exists="append",
-        index=False,
-    )
+    dataframe = dataframe.astype(object).where(pd.notna(dataframe), None)
+
+    records = [
+        {
+            column: None if value is None else str(value)
+            for column, value in row.items()
+        }
+        for row in dataframe.to_dict(orient="records")
+    ]
+
+    engine = warehouse_engine()
+    try:
+        metadata = MetaData(schema="bronze")
+        bronze_table = Table(
+            dataset,
+            metadata,
+            *(Column(column_name, Text) for column_name in dataframe.columns),
+        )
+        metadata.create_all(engine, tables=[bronze_table], checkfirst=True)
+
+        if records:
+            with engine.begin() as connection:
+                connection.execute(bronze_table.insert(), records)
+        else:
+            logger.warning(
+                "No rows found in object_key=%s for bronze.%s; skipping insert.",
+                object_key,
+                dataset,
+            )
+    finally:
+        engine.dispose()
 
     logger.info(
         "Loaded %s rows into bronze.%s from object_key=%s",
@@ -176,7 +252,6 @@ def load_one_csv_to_bronze(object_key: str, target_table: str) -> None:
 
 def load_latest_to_bronze(target_table: str, prefix: str = "letterboxd/") -> str:
     dataset = target_table.lower()
-    suffix = f"_{dataset}.csv"
-    object_key = find_latest_key(prefix=prefix, suffix=suffix, bucket=RAW_BUCKET)
+    object_key = find_latest_key_for_dataset(dataset=dataset, prefix=prefix, bucket=RAW_BUCKET)
     load_one_csv_to_bronze(object_key=object_key, target_table=dataset)
     return object_key

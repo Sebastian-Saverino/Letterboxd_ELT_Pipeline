@@ -1,7 +1,4 @@
 x-airflow-common: &airflow-common
-  build:
-    context: ./airflow
-    dockerfile: Dockerfile
   image: letterboxd-airflow:local
   env_file:
     - .env
@@ -25,7 +22,7 @@ x-airflow-common: &airflow-common
     DBT_TARGET: ${DBT_TARGET}
     LETTERBOXD_API_BASE_URL: http://api:8000
     LETTERBOXD_INGESTION_FILE_GLOB: ${LETTERBOXD_INGESTION_FILE_GLOB}
-    LETTERBOXD_INGESTION_SOURCE_DIR: /opt/airflow/project/airflow/config/ingestion
+    LETTERBOXD_INGESTION_SOURCE_DIR: /opt/airflow/config/ingestion
     LETTERBOXD_PIPELINE_SCHEDULE: ${LETTERBOXD_PIPELINE_SCHEDULE}
     PYTHONPATH: /opt/airflow/project/bronze_loader
   volumes:
@@ -170,6 +167,9 @@ services:
   airflow-init:
     <<: *airflow-common
     container_name: letterboxd_airflow_init
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
     depends_on:
       airflow-postgres:
         condition: service_healthy
