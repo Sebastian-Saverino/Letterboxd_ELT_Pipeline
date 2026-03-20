@@ -1,6 +1,6 @@
 # Letterboxd Data Pipeline
 
-A portfolio-grade ELT project that ingests personal Letterboxd exports, preserves raw files in object storage, loads a Postgres warehouse, transforms data with dbt, orchestrates workflows with Apache Airflow, and serves analytics in Metabase.
+A portfolio-grade ELT project that ingests personal Letterboxd film related exports, preserves raw files in object storage, loads a Postgres warehouse, transforms data with dbt, orchestrates workflows with Apache Airflow, and serves analytics in Metabase.
 
 ## Project Summary
 
